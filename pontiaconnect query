@@ -1,0 +1,61 @@
+[{ $match: {{created_at}} }
+{ "$lookup": {        "from": "users",        "localField": "userId",        "foreignField": "_id",        "as": "uname"    }},
+{ "$lookup": { "from": "lists",  "localField": "listId", "foreignField": "_id", "as": "lname" }},
+{"$unwind":"$lname"},{"$unwind":"$uname"},{"$unwind":"$uname.emails"},
+{"$project":{"_id":false,"userId":"$uname.name","userroll":"$uname.roles","phonenumber":"$uname.emails.address","boardId":"$boardId","listId":"$lname.title","created":{"$let":{"vars":{"column":"$createdAt"},"in":"$$column"}},"customFields":"$customFields.value"}},
+{"$unwind":"$userroll"},{"$unwind":"$customFields"},
+
+{"$match":{"$and":[{"listId":{"$ne":"delete"}}]}},
+{"$match":{"$and":[{"userroll":{"$eq":"employee"}}]}},
+
+{"$project":{"_id":false,"userId":"$userId","listId":"$listId","phonenumber":{"$substr":["$phonenumber",0,11]},"userroll":"$userroll","created":"$created","customFields":"$customFields","temp":{"$substr":["$customFields",38,4]}}},
+{"$match":{"$and":[{"phonenumber":{"$ne":"9186672400"}}]}},{"$match":{"$and":[{"phonenumber":{"$ne":"9194324688"}}]}},{"$match":{"$and":[{"phonenumber":{"$ne":"9181289099"}}]}}
+{"$match":{"$and":[{"phonenumber":{"$ne":"9186672400"}}]}},{"$match":{"$and":[{"phonenumber":{"$ne":"9194324688"}}]}},
+{"$match":{"$and":[
+        {"phonenumber":{"$ne":"9181289099"}},
+        {"phonenumber":{"$ne":"91994021812"}},
+        {"phonenumber":{"$ne":"91733892115"}},
+        {"phonenumber":{"$ne":"91750221116"}}
+        ]}},
+{"$project":{"_id":false,"userId":"$userId","listId":"$listId","phonenumber":"$phonenumber","userroll":"$userroll","created":{"$subtract":["$created",14400000]},"customFields":"$customFields","temp":"$temp"}},
+{ "$addFields": { "resultObject": { "$regexFind": { input: "$customFields", regex:"I am working onsite" }  } } },
+{ "$addFields": { "resultObject1": { "$regexFind": { input: "$customFields", regex:"I am working remotely" }  } } },
+{ "$addFields": { "resultObject2": { "$regexFind": { input: "$customFields", regex:"Personal" }  } } },
+{ "$addFields": { "resultObject3": { "$regexFind": { input: "$customFields", regex:"Sick" }  } } },
+
+{ "$addFields": { "resultObject4": { "$regexFind": { input: "$customFields", regex:"Bereavement" }  } } },
+{ "$addFields": { "resultObject5": { "$regexFind": { input: "$customFields", regex:"Jury duty" }  } } },
+{ "$addFields": { "resultObject6": { "$regexFind": { input: "$customFields", regex:"COVID-19 Quarantine" }  } } },
+{ "$addFields": { "resultObject7": { "$regexFind": { input: "$customFields", regex:"COVID- 19 Isolation" }  } } },
+{ "$addFields": { "resultObject8": { "$regexFind": { input: "$customFields", regex:"Emergency Paid" }  } } },
+{ "$addFields": { "resultObject9": { "$regexFind": { input: "$customFields", regex:"Military" }  } } },
+{ "$addFields": { "resultObject10": { "$regexFind": { input: "$customFields", regex:"I am on unpaid" }  } } },           
+{"$project":{"_id":false,"userId":"$userId","listId":"$listId","phonenumber":"$phonenumber","customFields":"$customFields",
+            "resultObject":{"$switch": {
+                                 "branches": [
+                                     {"case": { "$eq": ["$resultObject.match", "I am working onsite"] },"then": "Onsite"  }, 
+                                     {"case": { "$eq": ["$resultObject1.match", "I am working remotely"] },"then": "Working Remotely"  },
+                                      {"case": { "$eq": ["$resultObject2.match", "Personal"] },"then": "Personal"  },
+                                      {"case": { "$eq": ["$resultObject3.match", "Sick"] },"then": "Sick(Non COVID)"  },
+                                     {"case": { "$eq": ["$resultObject4.match", "Bereavement"] },"then": "Bereavement"  },
+                                     {"case": { "$eq": ["$resultObject5.match", "Jury duty"] },"then": "Jury duty"  }, 
+                                     {"case": { "$eq": ["$resultObject6.match", "COVID-19 Quarantine"] },"then": "COVID-19 Quarantine"  },
+                                      {"case": { "$eq": ["$resultObject7.match", "COVID- 19 Isolation"] },"then": "COVID- 19 Isolation"  },
+                                      {"case": { "$eq": ["$resultObject8.match", "Emergency Paid"] },"then": "Emergency Paid Leave"  },
+                                     {"case": { "$eq": ["$resultObject9.match", "Military"] },"then": "Military"  },
+                                    {"case": { "$eq": ["$resultObject10.match", "I am on unpaid"] },"then": "Unpaid Leave"  },
+                                    ],
+                                 "default": "null"
+                                         }
+                             }
+
+    
+}},
+{"$project":{"_id":false,"userId":"$userId","listId":"$listId","phonenumber":"$phonenumber","resultObject":"$resultObject","customFields":"$customFields"}},
+{"$match":{"$and":[{"resultObject":{"$ne":"null"}}]}},
+
+{"$project":{"_id":false,"userId":"$userId","listId":"$listId","phonenumber":"$phonenumber","resultObject":"$resultObject"}},
+
+
+{"$limit":1048576}
+]

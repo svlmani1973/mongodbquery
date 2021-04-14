@@ -1,0 +1,73 @@
+/* used in rocket chat room*/
+
+[{ $match: {{ts}} },
+{"$match":{"$and":[{"rid":{"$eq":"HFM94WstrBe6fjfir"}}]}},
+{"$project":{"_id":"$_id","msg":"$msg","rid":"$rid","ts":"$ts"}},
+{"$project":{"_id":"$_id","rid":"$rid","ts":"$ts","msg":"$msg",
+"os":{"$substr":
+        ["$msg",{"$add": [{"$indexOfBytes": ["$msg", "errorOS"]}, 10]},{"$indexOfBytes": [{"$substr":
+        ["$msg",{"$add": [{"$indexOfBytes": ["$msg", "errorOS"]}, 10]},10]}, "\""]}]},
+"host":{"$substr":
+        ["$msg",{"$add": [{"$indexOfBytes": ["$msg", "errorHost"]}, 12]},{"$indexOfBytes": [{"$substr":
+        ["$msg",{"$add": [{"$indexOfBytes": ["$msg", "errorHost"]}, 12]},30]}, "\""]}]},
+"appversion":{"$substr":
+        ["$msg",{"$add": [{"$indexOfBytes": ["$msg", "errorAppVersion"]}, 20]},{"$indexOfBytes": [{"$substr":
+        ["$msg",{"$add": [{"$indexOfBytes": ["$msg", "errorAppVersion"]}, 20]},20]}, "\""]}]},
+"method":{"$substr":
+        ["$msg",{"$add": [{"$indexOfBytes": ["$msg", "errorMethod"]}, 14]},{"$indexOfBytes": [{"$substr":
+        ["$msg",{"$add": [{"$indexOfBytes": ["$msg", "errorMethod"]}, 14]},70]}, "\""]}]},
+
+       "errorcond": { $cond: { if: { $ne: [ 
+{"$substr":
+        ["$msg",{"$add": [{"$indexOfBytes": ["$msg", "errorData"]}, 12]},
+                {"$indexOfBytes": [
+                                    {"$substr":["$msg",
+                                                {"$add": [{"$indexOfBytes": ["$msg", "errorData"]}, 13]},
+                                                110]}
+                                                ,"\""]}
+                                                ]}, "" ] }, then: 
+{"$substr":
+        ["$msg",{"$add": [{"$indexOfBytes": ["$msg", "errorData"]}, 13]},
+                {"$indexOfBytes": [
+                                    {"$substr":["$msg",
+                                                {"$add": [{"$indexOfBytes": ["$msg", "errorData"]}, 13]},
+                                                110]}
+                                                ,"\""]}
+                                                ]}, else: 
+{"$substr":
+        ["$msg",{"$add": [{"$indexOfBytes": ["$msg", "reason"]},11]},
+                {"$indexOfBytes": [
+                                    {"$substr":["$msg",
+                                                {"$add": [{"$indexOfBytes": ["$msg", "reason"]},11]},
+                                                110]}
+                                                ,"\""]},
+                                                ]} }},
+  
+     "startvalue":
+{
+   "$switch": {
+      "branches": [
+         { "case": { "$gte": [ {"$indexOfBytes": ["$msg", "username"]}, 0 ] }, "then":{"$add":[ {"$indexOfBytes": ["$msg", "username"]},11]} },
+         { "case": { "$gte": [  {"$indexOfBytes": ["$msg", "user:"]}, 0  ] }, "then": {"$add":[ {"$indexOfBytes": ["$msg", "user:"]},6]}},
+          { "case": { "$gte": [  {"$indexOfBytes": ["$msg", "user"]}, 0  ] }, "then": {"$add":[ {"$indexOfBytes": ["$msg", "user"]},7]} },
+                 { "case": { "$gte": [  {"$indexOfBytes": ["$msg", "errorUser"]}, 0  ] }, "then": {"$add":[ {"$indexOfBytes": ["$msg", "errorUser"]},11]} }
+      ],
+      "default": "1"
+   }
+},
+     "searchstring": {"$substr":["$msg",{"$add": [{"$indexOfBytes": ["$msg", "errorData"]}, 12]},110]}
+                                                ,
+         "eendvalue":  {"$indexOfBytes": [
+                                    {"$substr":["$msg",{"$add": [{"$indexOfBytes": ["$msg", "errorData"]}, 12]},110]}
+                                                ,"\""]},
+        "error2":{"$indexOfBytes": [{"$substr":
+        ["$msg",{"$add": [{"$indexOfBytes": ["$msg", "errorData"]}, 10]},10]}, "\""]}}},
+        
+
+  [[{
+        $match: {host: {{varhost}}}
+    },]]
+{"$project":{"_id":false,"host":"$host","ts":"$ts","method":"$method","os":"$os","appversion":"$appversion","error":"$errorcond","user":"$user","msg":"$msg", "startvalue":"$startvalue", "searchstring": {"$substr":["$msg",{ $toInt: "$startvalue" },55]}}},
+{"$project":{"_id":false,"host":"$host","ts":"$ts","method":"$method","os":"$os","appversion":"$appversion","error":"$error","user":"$user","msg":"$msg","startvalue":"$startvalue", "searchstring":"$searchstring","eendvalue":  {"$indexOfBytes":["$searchstring","\""]} }},
+{"$project":{"_id":false,"host":"$host","ts":"$ts","os":"$os","appversion":"$appversion","error":"$error","startvalue":"$startvalue", "username":{"$substr":["$searchstring",0,"$eendvalue"]},"msg":"$msg", "method":"$method",}}
+ {"$limit":500}]
